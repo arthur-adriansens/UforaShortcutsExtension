@@ -44,7 +44,8 @@
   ],
   "browser_specific_settings": {
     "gecko": {
-      "id": "UforaShortcutsExtension@arther-adriansens.github.io"
+      "id": "UforaShortcutsExtension@arther-adriansens.github.io",
+      "data_collection_permissions": []
     }
   }
 }
