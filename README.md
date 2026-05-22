@@ -14,14 +14,12 @@ For now, it's not yet uploaded to the Chrome Web Store (will be available soon).
 
 ## UI Shortcuts
 
-Use **Alt** to show and edit all shortcuts. All shortcuts are customizable!
+Save a lot of time with these preset UI shortcuts and by adding custom shortcuts (by pressing **Alt** when the courses menu is open):
 
-Save a lot of time with these preset UI shortcuts:
-
-- **C** - Open the courses menu
+- **Alt** - Hold to see keyboard shortcut labels on buttons
+- **c** - Open the courses menu
     - combine with other custom letters to quickly go to course
-- **U** - Open notifications
-- **Alt** - Hold to see keyboard shortcut labels on buttons (for courses menu)
+- **u** - Open notifications
 
 ## Video Shortcuts
 
@@ -30,8 +28,8 @@ When watching a video on Ufora:
 - **Space** - Play / Pause
 - **Left/Right Arrow** - Skip 5 seconds backwards/forwards
 - **Up/Down Arrow** - Increase/decrease volume
-- **F** - Toggle fullscreen
-- **M** - Mute/unmute
+- **f** - Toggle fullscreen
+- **m** - Mute/unmute
 
 ## How It Works
 
