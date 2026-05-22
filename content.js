@@ -29,7 +29,7 @@ function getElements() {
     return true;
 }
 
-let shortcutConfigDefaults = {
+const shortcutConfigDefaults = {
     c: { action: "Open course menu / show course shortcuts", group: "uiShortcuts" },
     u: { action: "Open notifications", group: "uiShortcuts" },
     Alt: { action: "Show shortcut badges", group: "uiShortcuts" },
@@ -196,28 +196,9 @@ function uiShortcuts(e) {
 
         default:
             const courseId = Object.keys(courseShortcuts).find((id) => courseShortcuts[id] === e.key);
-            if (!courseId) break;
+            if (!courseId || mouseInVideoPlayer) break;
 
-            let retries = 0;
-            const maxRetries = 50; // Retry for up to 5 seconds (50 * 100ms)
-
-            // If courses not loaded yet ==> "queue" / keep re-trying the shortcut
-            const queueShortcut = () => {
-                console.log(`shortcut queueing: ${e.key}`);
-                const element = document.querySelector(`[data-org-unit-id="${courseId}"]`);
-
-                if (element) {
-                    element?.click();
-                } else if (retries < maxRetries) {
-                    // Retry after 100ms
-                    retries++;
-                    setTimeout(queueShortcut, 100);
-                } else {
-                    console.log("Failed to execute course shortcut: Could not load courses menu");
-                }
-            };
-
-            queueShortcut();
+            window.location.href = `/d2l/home/${courseId}`;
     }
 }
 
@@ -342,25 +323,6 @@ window.onload = () => {
         getElements(); // try again (in case the buttons weren't loaded on first try)
     }
 
-    // Fetch the options of the courses menu (force to quickly open menu)
-    coursesBtn.dispatchEvent(
-        new MouseEvent("mouseup", {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            view: window,
-        }),
-    );
-
-    coursesBtn.dispatchEvent(
-        new MouseEvent("mouseup", {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            view: window,
-        }),
-    );
-
     // 2. VIDEO SHORTCUTS
 
     let retries = 0;
@@ -374,7 +336,7 @@ window.onload = () => {
             muteButton = videoWrapper.shadowRoot.querySelector("#d2l-labs-media-player-volume-container > d2l-button-icon");
         }
 
-        // If we found the video element, set up shortcuts
+        // If video element is found, set up shortcuts
         if (video && videoWrapper?.shadowRoot) {
             setupVideoShortcuts();
         } else if (retries < maxRetries) {

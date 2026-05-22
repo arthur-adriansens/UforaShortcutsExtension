@@ -48,4 +48,5 @@ This project is proprietary and all rights are reserved. In short: unauthorized 
 ## Developer todo's
 
 [x] Add localhost for support of custom shortcuts
-[x] Make custom shortcuts work
+[x] Make custom shortcuts work (+faster via direct redirect)
+[x] Give video shortcuts priority over custom (course) shortcuts
