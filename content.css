@@ -1,0 +1,26 @@
+.shortcutButton {
+    --d2l-color-gypsum: #e3e9f1;
+    --d2l-color-tungsten: #494c4e;
+
+    background-color: var(--d2l-color-gypsum);
+    color: var(--d2l-color-tungsten);
+
+    border-radius: .3rem;
+    width: calc(2rem + 2px);
+    height: calc(2rem + 2px);
+    aspect-ratio: 1;
+
+    display: flex;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: auto;
+    margin-bottom: auto;
+
+    top: 50%;
+    bottom: 50%;
+}
