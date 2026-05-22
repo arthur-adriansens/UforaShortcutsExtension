@@ -44,3 +44,8 @@ The extension only works on `https://ufora.ugent.be/*`, so it only runs when nec
 ## License
 
 This project is proprietary and all rights are reserved. In short: unauthorized copying, modification, distribution, or use of this code without my permission is strictly prohibited. See the [LICENSE](LICENSE) file for details.
+
+## Developer todo's
+
+[x] Add localhost for support of custom shortcuts
+[x] Make custom shortcuts work

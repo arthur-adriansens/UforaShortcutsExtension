@@ -23,4 +23,12 @@
 
     top: 50%;
     bottom: 50%;
+
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s;
+
+    &:hover {
+        background-color: var(--d2l-color-tungsten);
+        color: var(--d2l-color-gypsum);
+    }
 }

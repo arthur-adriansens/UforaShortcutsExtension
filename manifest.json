@@ -16,6 +16,9 @@
       "128": "icon.png"
     }
   },
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
       "matches": [

@@ -4,16 +4,110 @@
 
 let showShortcuts = false;
 const shortcutButtons = [];
+const buttonsWithShortcuts = [];
+let coursesBtnWrapper, coursesBtn, notificationsBtnWrapper, notificationsBtn;
 
-const coursesBtnWrapper = document.querySelector("d2l-labs-navigation-main-header .d2l-navigation-s-course-menu");
-const coursesBtn = coursesBtnWrapper?.children?.[0]?.shadowRoot?.querySelector("button");
+function getElements() {
+    coursesBtnWrapper = document.querySelector("d2l-labs-navigation-main-header .d2l-navigation-s-course-menu");
+    coursesBtn = coursesBtnWrapper?.children?.[0]?.shadowRoot?.querySelector("button");
 
-const notificationsBtnWrapper = document.querySelector("d2l-labs-navigation-main-header .d2l-navigation-s-notification:last-child");
-const notificationsBtn = notificationsBtnWrapper?.children?.[0]?.shadowRoot?.querySelector("button");
-const buttonsWithShortcuts = [coursesBtnWrapper, notificationsBtn];
+    if (!coursesBtn) return false;
+    buttonsWithShortcuts.push(coursesBtnWrapper);
 
-function changeShortcut(e) {
-    console.log(e.target.dataset.courseId);
+    notificationsBtnWrapper = document.querySelector("d2l-labs-navigation-main-header .d2l-navigation-s-notification:last-child");
+    notificationsBtn = notificationsBtnWrapper?.children?.[0]?.shadowRoot?.querySelector("button");
+
+    if (!notificationsBtn) return false;
+    buttonsWithShortcuts.push(notificationsBtn);
+
+    createShortcutButton("c", coursesBtnWrapper);
+    createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
+    document.addEventListener("keydown", uiShortcuts);
+    document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
+
+    coursesBtn.addEventListener("click", createCourseShortcutButtons, { once: true });
+
+    return true;
+}
+
+const shortcutConfig = {
+    pageHost: window.location.host,
+    uiShortcuts: [
+        { keys: "c", action: "Open course menu / show course shortcuts" },
+        { keys: "u", action: "Open notifications" },
+        { keys: "Alt", action: "Show shortcut badges" },
+    ],
+    videoShortcuts: [
+        { keys: "Space", action: "Play / pause" },
+        { keys: "ArrowRight", action: "Skip forward 5s" },
+        { keys: "ArrowLeft", action: "Skip back 5s" },
+        { keys: "ArrowUp", action: "Volume up" },
+        { keys: "ArrowDown", action: "Volume down" },
+        { keys: "f", action: "Toggle fullscreen" },
+        { keys: "m", action: "Mute / unmute" },
+    ],
+    customShortcuts: [],
+};
+
+async function saveShortcutsToStorage() {
+    if (!chrome?.storage?.local) return;
+    const current = await chrome.storage.local.get(["uforaShortcuts"]);
+
+    if (current && Object.keys(current).length > 0) return; // Don't overwrite existing shortcuts (only set on first load)
+
+    await chrome.storage.local.set({ uforaShortcuts: shortcutConfig }, () => {
+        if (chrome.runtime.lastError) {
+            console.warn("Failed to save shortcuts to storage:", chrome.runtime.lastError);
+        }
+    });
+}
+
+async function changeShortcut(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e?.target?.dataset?.courseId !== undefined) {
+        let newShortcut = prompt("Enter a single lowercase letter (a-z) or a single digit (0-9) to use as shortcut for this course:");
+        if (newShortcut) {
+            newShortcut = String(newShortcut).trim();
+            if (newShortcut.length !== 1) {
+                alert("Please enter exactly one character: a lowercase letter (a-z) or a digit (0-9).");
+                return;
+            }
+            const ch = newShortcut.toLowerCase();
+            if (!/^[a-z0-9]$/.test(ch)) {
+                alert("Invalid shortcut. Use a lowercase letter (a-z) or a digit (0-9).");
+                return;
+            }
+
+            // Update the shortcut for the selected course (store mapping)
+            const courseId = e.target.dataset.courseId;
+            const existingIndex = shortcutConfig.customShortcuts.findIndex((s) => s.courseId === courseId);
+            const entry = { courseId, key: ch };
+            if (existingIndex >= 0) {
+                shortcutConfig.customShortcuts[existingIndex] = entry;
+            } else {
+                shortcutConfig.customShortcuts.push(entry);
+            }
+
+            // Persist to chrome.storage if available
+            if (chrome?.storage?.local) {
+                const result = await chrome.storage.local.get("uforaShortcuts");
+
+                const data = result?.uforaShortcuts ? result.uforaShortcuts : Object.assign({}, shortcutConfig);
+                data.customShortcuts = shortcutConfig.customShortcuts;
+
+                await chrome.storage.local.set({ uforaShortcuts: data });
+
+                if (chrome.runtime.lastError) {
+                    console.warn("Failed to save custom shortcut:", chrome.runtime.lastError);
+                    return;
+                }
+            }
+
+            e.target.textContent = ch;
+        }
+    }
 }
 
 function createShortcutButton(letter, wrapper, styleExtra = "") {
@@ -54,7 +148,7 @@ function createCourseShortcutButtons() {
 
         const btn = document.createElement("div");
         btn.classList.add("shortcutButton");
-        btn.style.cssText += `position: relative; display: ${showShortcuts ? "flex" : "none"}; opacity: 1; margin-right: .5rem; font-size: 1.1rem;`;
+        btn.style.cssText += `position: relative; pointer-events: ${showShortcuts ? "auto" : "none"}; display: ${showShortcuts ? "flex" : "none"}; opacity: 1; margin-right: .5rem;`;
 
         btn.textContent = "+";
         btn.dataset.courseId = course_id;
@@ -223,13 +317,13 @@ function mouseOutPlayer() {
 /* 4. INITIALIZE ALL SHORTCUTS */
 
 // 1. UI SHORTCUTS
-createShortcutButton("c", coursesBtnWrapper);
-createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
-document.addEventListener("keydown", uiShortcuts);
-document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
+let elementsExist = getElements(); // try fast way
 
 window.onload = () => {
-    coursesBtn.addEventListener("click", createCourseShortcutButtons, { once: true });
+    saveShortcutsToStorage();
+    if (!elementsExist) {
+        getElements(); // try again (in case the buttons weren't loaded on first try)
+    }
 
     // 2. VIDEO SHORTCUTS
 
