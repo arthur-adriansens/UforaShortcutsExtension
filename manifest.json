@@ -41,5 +41,10 @@
         "https://ufora.ugent.be/*"
       ]
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "UforaShortcutsExtension@arther-adriansens.github.io"
+    }
+  }
 }
