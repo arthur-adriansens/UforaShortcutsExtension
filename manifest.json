@@ -31,5 +31,15 @@
         "content.css"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injected.js"
+      ],
+      "matches": [
+        "https://ufora.ugent.be/*"
+      ]
+    }
   ]
 }

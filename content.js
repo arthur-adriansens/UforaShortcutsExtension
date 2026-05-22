@@ -3,6 +3,7 @@
 /* 1. UI SHORTCUTS */
 
 let showShortcuts = false;
+let coursesLoaded = false;
 const shortcutButtons = [];
 const buttonsWithShortcuts = [];
 let coursesBtnWrapper, coursesBtn, notificationsBtnWrapper, notificationsBtn;
@@ -20,46 +21,52 @@ function getElements() {
     if (!notificationsBtn) return false;
     buttonsWithShortcuts.push(notificationsBtn);
 
+    // Fetch the options of the courses menu
+    window.addEventListener("message", (event) => {
+        if (event.data?.type === "COURSES_LOADED") {
+            console.log("Courses loaded!");
+            coursesLoaded = true;
+        }
+    });
+
+    // Inject the script to fetch the options
+    const script = document.createElement("script");
+    script.src = chrome.runtime.getURL("injected.js");
+    document.documentElement.appendChild(script);
+
     createShortcutButton("c", coursesBtnWrapper);
     createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
-    document.addEventListener("keydown", uiShortcuts);
-    document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
 
     coursesBtn.addEventListener("click", createCourseShortcutButtons, { once: true });
+    coursesBtnWrapper.children[0];
 
     return true;
 }
 
-const shortcutConfig = {
-    pageHost: window.location.host,
-    uiShortcuts: [
-        { keys: "c", action: "Open course menu / show course shortcuts" },
-        { keys: "u", action: "Open notifications" },
-        { keys: "Alt", action: "Show shortcut badges" },
-    ],
-    videoShortcuts: [
-        { keys: "Space", action: "Play / pause" },
-        { keys: "ArrowRight", action: "Skip forward 5s" },
-        { keys: "ArrowLeft", action: "Skip back 5s" },
-        { keys: "ArrowUp", action: "Volume up" },
-        { keys: "ArrowDown", action: "Volume down" },
-        { keys: "f", action: "Toggle fullscreen" },
-        { keys: "m", action: "Mute / unmute" },
-    ],
-    customShortcuts: [],
+let shortcutConfigDefaults = {
+    c: { action: "Open course menu / show course shortcuts", group: "uiShortcuts" },
+    u: { action: "Open notifications", group: "uiShortcuts" },
+    Alt: { action: "Show shortcut badges", group: "uiShortcuts" },
+
+    Space: { action: "Play / pause", group: "videoShortcuts" },
+    ArrowRight: { action: "Skip forward 5s", group: "videoShortcuts" },
+    ArrowLeft: { action: "Skip back 5s", group: "videoShortcuts" },
+    ArrowUp: { action: "Volume up", group: "videoShortcuts" },
+    ArrowDown: { action: "Volume down", group: "videoShortcuts" },
+    f: { action: "Toggle fullscreen", group: "videoShortcuts" },
+    m: { action: "Mute / unmute", group: "videoShortcuts" },
 };
+
+let courseShortcuts = {}; // Maps courseId -> shortcut key
 
 async function saveShortcutsToStorage() {
     if (!chrome?.storage?.local) return;
-    const current = await chrome.storage.local.get(["uforaShortcuts"]);
 
-    if (current && Object.keys(current).length > 0) return; // Don't overwrite existing shortcuts (only set on first load)
-
-    await chrome.storage.local.set({ uforaShortcuts: shortcutConfig }, () => {
-        if (chrome.runtime.lastError) {
-            console.warn("Failed to save shortcuts to storage:", chrome.runtime.lastError);
-        }
-    });
+    try {
+        await chrome.storage.local.set({ shortcutConfig: shortcutConfigDefaults, courseShortcuts });
+    } catch (err) {
+        console.warn("Failed to save shortcuts to storage:", err);
+    }
 }
 
 async function changeShortcut(e) {
@@ -67,44 +74,25 @@ async function changeShortcut(e) {
     e.stopPropagation();
 
     if (e?.target?.dataset?.courseId !== undefined) {
-        let newShortcut = prompt("Enter a single lowercase letter (a-z) or a single digit (0-9) to use as shortcut for this course:");
+        let newShortcut = prompt("Enter a single letter, digit or symbol to use as shortcut for this course:");
         if (newShortcut) {
             newShortcut = String(newShortcut).trim();
             if (newShortcut.length !== 1) {
-                alert("Please enter exactly one character: a lowercase letter (a-z) or a digit (0-9).");
+                alert("Please enter exactly one character.");
                 return;
             }
             const ch = newShortcut.toLowerCase();
-            if (!/^[a-z0-9]$/.test(ch)) {
-                alert("Invalid shortcut. Use a lowercase letter (a-z) or a digit (0-9).");
+            if (/\s/.test(ch)) {
+                alert("Invalid shortcut. Use a non-whitespace character.");
                 return;
             }
 
-            // Update the shortcut for the selected course (store mapping)
+            // Update the shortcut mapping for the selected course
             const courseId = e.target.dataset.courseId;
-            const existingIndex = shortcutConfig.customShortcuts.findIndex((s) => s.courseId === courseId);
-            const entry = { courseId, key: ch };
-            if (existingIndex >= 0) {
-                shortcutConfig.customShortcuts[existingIndex] = entry;
-            } else {
-                shortcutConfig.customShortcuts.push(entry);
-            }
+            courseShortcuts[courseId] = ch;
 
-            // Persist to chrome.storage if available
-            if (chrome?.storage?.local) {
-                const result = await chrome.storage.local.get("uforaShortcuts");
-
-                const data = result?.uforaShortcuts ? result.uforaShortcuts : Object.assign({}, shortcutConfig);
-                data.customShortcuts = shortcutConfig.customShortcuts;
-
-                await chrome.storage.local.set({ uforaShortcuts: data });
-
-                if (chrome.runtime.lastError) {
-                    console.warn("Failed to save custom shortcut:", chrome.runtime.lastError);
-                    return;
-                }
-            }
-
+            // Persist to chrome.storage
+            await saveShortcutsToStorage();
             e.target.textContent = ch;
         }
     }
@@ -150,7 +138,7 @@ function createCourseShortcutButtons() {
         btn.classList.add("shortcutButton");
         btn.style.cssText += `position: relative; pointer-events: ${showShortcuts ? "auto" : "none"}; display: ${showShortcuts ? "flex" : "none"}; opacity: 1; margin-right: .5rem;`;
 
-        btn.textContent = "+";
+        btn.textContent = courseShortcuts[course_id] || "+";
         btn.dataset.courseId = course_id;
 
         btn.onclick = changeShortcut;
@@ -219,6 +207,30 @@ function uiShortcuts(e) {
             );
 
             break;
+
+        default:
+            const courseId = Object.keys(courseShortcuts).find((id) => courseShortcuts[id] === e.key);
+            if (!courseId) break;
+
+            let retries = 0;
+            const maxRetries = 50; // Retry for up to 5 seconds (50 * 100ms)
+
+            // If courses not loaded yet ==> "queue" / keep re-trying the shortcut
+            const queueShortcut = () => {
+                const element = document.querySelector(`[data-org-unit-id="${courseId}"]`);
+
+                if (coursesLoaded || element) {
+                    element?.click();
+                } else if (retries < maxRetries) {
+                    // Retry after 100ms
+                    retries++;
+                    setTimeout(queueShortcut, 100);
+                } else {
+                    console.log("Failed to execute course shortcut: Could not load courses menu");
+                }
+            };
+
+            queueShortcut();
     }
 }
 
@@ -319,8 +331,23 @@ function mouseOutPlayer() {
 // 1. UI SHORTCUTS
 let elementsExist = getElements(); // try fast way
 
-window.onload = () => {
-    saveShortcutsToStorage();
+async function initializeShortcuts() {
+    try {
+        const result = await chrome?.storage?.local?.get(["courseShortcuts"]);
+        if (result?.courseShortcuts) {
+            courseShortcuts = result.courseShortcuts;
+        }
+    } catch (err) {
+        console.warn("Failed to load courseShortcuts from storage:", err);
+    }
+    await saveShortcutsToStorage();
+}
+
+document.addEventListener("keydown", uiShortcuts);
+document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
+
+window.onload = async () => {
+    await initializeShortcuts();
     if (!elementsExist) {
         getElements(); // try again (in case the buttons weren't loaded on first try)
     }
