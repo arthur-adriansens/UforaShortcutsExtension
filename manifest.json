@@ -35,7 +35,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "injected.js"
+        "unused/injected.js"
       ],
       "matches": [
         "https://ufora.ugent.be/*"

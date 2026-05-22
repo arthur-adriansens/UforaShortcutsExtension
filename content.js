@@ -3,7 +3,6 @@
 /* 1. UI SHORTCUTS */
 
 let showShortcuts = false;
-let coursesLoaded = false;
 const shortcutButtons = [];
 const buttonsWithShortcuts = [];
 let coursesBtnWrapper, coursesBtn, notificationsBtnWrapper, notificationsBtn;
@@ -20,19 +19,6 @@ function getElements() {
 
     if (!notificationsBtn) return false;
     buttonsWithShortcuts.push(notificationsBtn);
-
-    // Fetch the options of the courses menu
-    window.addEventListener("message", (event) => {
-        if (event.data?.type === "COURSES_LOADED") {
-            console.log("Courses loaded!");
-            coursesLoaded = true;
-        }
-    });
-
-    // Inject the script to fetch the options
-    const script = document.createElement("script");
-    script.src = chrome.runtime.getURL("injected.js");
-    document.documentElement.appendChild(script);
 
     createShortcutButton("c", coursesBtnWrapper);
     createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
@@ -217,9 +203,10 @@ function uiShortcuts(e) {
 
             // If courses not loaded yet ==> "queue" / keep re-trying the shortcut
             const queueShortcut = () => {
+                console.log(`shortcut queueing: ${e.key}`);
                 const element = document.querySelector(`[data-org-unit-id="${courseId}"]`);
 
-                if (coursesLoaded || element) {
+                if (element) {
                     element?.click();
                 } else if (retries < maxRetries) {
                     // Retry after 100ms
@@ -339,18 +326,40 @@ async function initializeShortcuts() {
         }
     } catch (err) {
         console.warn("Failed to load courseShortcuts from storage:", err);
+        return false;
     }
     await saveShortcutsToStorage();
+    return true;
 }
 
 document.addEventListener("keydown", uiShortcuts);
 document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
 
-window.onload = async () => {
-    await initializeShortcuts();
+initializeShortcuts();
+
+window.onload = () => {
     if (!elementsExist) {
         getElements(); // try again (in case the buttons weren't loaded on first try)
     }
+
+    // Fetch the options of the courses menu (force to quickly open menu)
+    coursesBtn.dispatchEvent(
+        new MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            view: window,
+        }),
+    );
+
+    coursesBtn.dispatchEvent(
+        new MouseEvent("mouseup", {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            view: window,
+        }),
+    );
 
     // 2. VIDEO SHORTCUTS
 
