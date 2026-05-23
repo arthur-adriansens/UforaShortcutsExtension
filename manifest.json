@@ -15,7 +15,7 @@
     "1920": "media/icon-1920.png"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "media/icon-16.png",
       "32": "media/icon-32.png",
@@ -37,10 +37,10 @@
         "https://ufora.ugent.be/*"
       ],
       "js": [
-        "content.js"
+        "src/content/content.js"
       ],
       "css": [
-        "content.css"
+        "src/content/content.css"
       ]
     }
   ],

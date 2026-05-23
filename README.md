@@ -50,3 +50,21 @@ This project is proprietary and all rights are reserved. In short: unauthorized 
 [x] Add localhost for support of custom shortcuts
 [x] Make custom shortcuts work (+faster via direct redirect)
 [x] Give video shortcuts priority over custom (course) shortcuts
+
+## Build & packaging
+
+A small helper is included to minify JS/CSS, assemble a `dist` folder and create a ZIP suitable for publishing.
+
+- Install dev dependencies:
+
+```bash
+npm install
+```
+
+- Build and create zip:
+
+```bash
+npm run build
+```
+
+The script will create `dist/` and a zip file named based on `manifest.json` (e.g. `Ufora Shortcuts-1.0.0.zip`).
