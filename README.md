@@ -2,7 +2,10 @@
 
 A Chrome extension that adds keyboard shortcuts to Ufora to make navigating videos and the interface faster and easier.
 
-![Render of the 3D logo made in Blender 😄.](/media/icon-1920.png)
+<p align="center">
+  <img src="./media/icon-v1.png" alt="Render of version 1 of the 3D logo I made in Blender 😄." width="280" />
+  <img src="./media/icon-1920.png" alt="Render of version 2 of the 3D logo U made in Blender 😄." width="280" />
+</p>
 
 ## Installation
 
