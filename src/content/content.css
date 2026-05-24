@@ -116,10 +116,12 @@
     outline: none;
 }
 
-.shortcutEditorPopup>#shortcutPopupStatus {
+.shortcutEditorPopup>#shortcutPopupStatus,
+p:has(i) {
     min-height: 1.2rem;
     color: #444;
-    margin-bottom: .75rem
+    margin-bottom: .75rem !important;
+    margin-top: 0 !important;
 }
 
 .shortcutEditorPopup>div.controls {

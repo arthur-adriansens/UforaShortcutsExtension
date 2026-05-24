@@ -222,6 +222,13 @@ function uiShortcuts(e) {
             const courseId = Object.keys(courseShortcuts).find((id) => courseShortcuts[id] === e.key);
             if (!courseId || mouseInVideoPlayer) break;
 
+            if (courseId.includes(".")) {
+                // courseId is a link
+                showShortcutToast(`Shortcut "${e.key}" → Redirect to ${courseId}`);
+                window.location.href = courseId;
+                break;
+            }
+
             showShortcutToast(`Shortcut "${e.key}" → Open course ${courseId}`);
             window.location.href = `/d2l/home/${courseId}`;
     }
@@ -402,6 +409,17 @@ function createShortcutEditorPopup() {
         <input id="shortcutPopupInput" maxlength="1" class="d2l-body-compact" />
         <div id="shortcutPopupStatus" class="d2l-body-compact"></div>
 
+        <label for="shortcutPopupLink" class="d2l-body-compact">Custom Link</label>
+        <input id="shortcutPopupLink" type="text" class="d2l-body-compact" />
+        <p class="d2l-body-compact"><i>This is optional: 
+            <u style="cursor:pointer;" onclick="document.getElementById('more').style.display = 'block'">read more</u>
+            <span id="more" style="display:none">
+                Redirect to a different tab, instead of the default home tab of the course. 
+                This can be any link: "https://ufora.ugent.be/d2l/home/..." would be the home page of the course (default) and "https://ufora.ugent.be/d2l/le/content/.../Home" will redirect to the content of the course.
+                Make sure to replace the "..." with the courseId (just copy the url).
+            </span>
+        </i></p>
+
         <div class="controls">
             <button id="shortcutPopupCancel" type="button">Cancel</button>
             <button id="shortcutPopupSave" type="button">Save</button>
@@ -414,6 +432,7 @@ function createShortcutEditorPopup() {
     editor = {
         overlay: overlay,
         input: box.querySelector("#shortcutPopupInput"),
+        linkInput: box.querySelector("#shortcutPopupLink"),
         status: box.querySelector("#shortcutPopupStatus"),
         closeBtn: box.querySelector("#shortcutPopupClose"),
         cancelBtn: box.querySelector("#shortcutPopupCancel"),
@@ -430,23 +449,31 @@ function createShortcutEditorPopup() {
         const value = String(editor.input.value || "")
             .trim()
             .toLowerCase();
+
         const { valid } = getShortcutStatus(value);
         if (!valid) return;
 
-        courseShortcuts[currentCourseSelected] = value;
+        // Add shortcut with courseId or link
+        if (editor.linkInput.value) delete courseShortcuts[currentCourseSelected];
+        // Todo: ability to be able to edit links, right now not possible (letter with link doesn't show up next to the course)
+
+        courseShortcuts[editor.linkInput.value || currentCourseSelected] = value;
         await saveShortcutsToStorage();
+
         updateCourseShortcutButton(currentCourseSelected);
         closePopup();
         showShortcutToast(`Saved shortcut "${value}"`);
     });
 
     editor.input.addEventListener("input", updateStatus);
-    editor.input.addEventListener("keydown", (e) => {
+    const autoSubmit = (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
             editor.saveBtn.click();
         }
-    });
+    };
+    editor.input.addEventListener("keydown", autoSubmit);
+    editor.linkInput.addEventListener("keydown", autoSubmit);
 }
 
 function showCourseShortcutPopup(courseId) {

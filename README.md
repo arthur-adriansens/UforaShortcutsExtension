@@ -49,12 +49,6 @@ The extension only works on `https://ufora.ugent.be/*`, so it only runs when nec
 
 This project is proprietary and all rights are reserved. In short: unauthorized copying, modification, distribution, or use of this code without my permission is strictly prohibited. See the [LICENSE](LICENSE) file for details.
 
-## Developer todo's
-
-[x] Add localhost for support of custom shortcuts
-[x] Make custom shortcuts work (+faster via direct redirect)
-[x] Give video shortcuts priority over custom (course) shortcuts
-
 ## Build & packaging
 
 A small helper is included to minify JS/CSS, assemble a `dist` folder and create a ZIP suitable for publishing.
