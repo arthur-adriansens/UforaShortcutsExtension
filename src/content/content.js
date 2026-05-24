@@ -44,6 +44,8 @@ const shortcutConfigDefaults = {
 };
 
 let courseShortcuts = {}; // Maps courseId -> shortcut key
+let toastTimer;
+let toastHover = false;
 
 async function saveShortcutsToStorage() {
     if (!chrome?.storage?.local) return;
@@ -60,27 +62,7 @@ async function changeShortcut(e) {
     e.stopPropagation();
 
     if (e?.target?.dataset?.courseId !== undefined) {
-        let newShortcut = prompt("Enter a single letter, digit or symbol to use as shortcut for this course:");
-        if (newShortcut) {
-            newShortcut = String(newShortcut).trim();
-            if (newShortcut.length !== 1) {
-                alert("Please enter exactly one character.");
-                return;
-            }
-            const ch = newShortcut.toLowerCase();
-            if (/\s/.test(ch)) {
-                alert("Invalid shortcut. Use a non-whitespace character.");
-                return;
-            }
-
-            // Update the shortcut mapping for the selected course
-            const courseId = e.target.dataset.courseId;
-            courseShortcuts[courseId] = ch;
-
-            // Persist to chrome.storage
-            await saveShortcutsToStorage();
-            e.target.textContent = ch;
-        }
+        showCourseShortcutPopup(e.target.dataset.courseId);
     }
 }
 
@@ -167,8 +149,6 @@ function uiShortcuts(e) {
             if (!coursesBtn) return;
             createCourseShortcutButtons();
 
-            // ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach((type) => {
-            // uses mouseup instead of click (click doesn't trigger the menu because of event listeners)
             coursesBtn.dispatchEvent(
                 new MouseEvent("mouseup", {
                     bubbles: true,
@@ -177,7 +157,7 @@ function uiShortcuts(e) {
                     view: window,
                 }),
             );
-
+            showShortcutToast('Shortcut "c" → Open course menu');
             break;
 
         case "u":
@@ -191,13 +171,14 @@ function uiShortcuts(e) {
                     view: window,
                 }),
             );
-
+            showShortcutToast('Shortcut "u" → Open notifications');
             break;
 
         default:
             const courseId = Object.keys(courseShortcuts).find((id) => courseShortcuts[id] === e.key);
             if (!courseId || mouseInVideoPlayer) break;
 
+            showShortcutToast(`Shortcut "${e.key}" → Open course ${courseId}`);
             window.location.href = `/d2l/home/${courseId}`;
     }
 }
@@ -294,6 +275,52 @@ function mouseOutPlayer() {
     mouseInVideoPlayer = false;
 }
 
+function getShortcutStatus(value) {
+    const courseId = currentCourseSelected;
+
+    const ch = String(value || "")
+        .trim()
+        .toLowerCase();
+    if (ch.length !== 1 || /\s/.test(ch)) {
+        return { valid: false, message: "Invalid shortcut" };
+    }
+
+    const conflict = Object.entries(courseShortcuts).find(([id, key]) => key === ch && id !== courseId);
+    if (conflict) {
+        return { valid: false, message: `"${ch}" is already in use` };
+    }
+
+    return {
+        valid: true,
+        message: courseShortcuts[courseId] === ch ? `Same as current shortcut: "${ch}"` : `Available shortcut: "${ch}"`,
+    };
+}
+
+function updateCourseShortcutButton(courseId) {
+    shortcutButtons.forEach((btn) => {
+        if (btn.dataset.courseId === courseId) {
+            btn.textContent = courseShortcuts[courseId] || "+";
+        }
+    });
+}
+
+const closePopup = () => {
+    if (!editor) return;
+
+    editor.overlay.style.display = "none";
+    popupOpen = false;
+};
+
+const updateStatus = () => {
+    if (!editor) return;
+
+    const { valid, message } = getShortcutStatus(editor.input.value);
+    editor.status.textContent = message;
+    editor.status.style.color = valid ? "#0b6f31" : "#b03535";
+    editor.saveBtn.disabled = !valid;
+    editor.saveBtn.style.opacity = valid ? "1" : "0.55";
+};
+
 /* 4. AUTO LOGIN */
 
 function login() {
@@ -303,7 +330,137 @@ function login() {
     login_btn?.click();
 }
 
-/* 5. INITIALIZE ALL SHORTCUTS */
+/* 5. SHORTCUT POPUPS */
+
+// New/edit shortcut popup (midden van scherm)
+
+// als parameter course = true ==> title: "course shortcut" bovenaan (naast close button),
+// input field met huidige shortcut (of leeg) ==> shortcut check text er (in klein) juist onder (groen: check, nog niet in gebruik, oranje: check, al in gebruik, rood: niet geldig)
+// dropdown met alle mogelijke tabladen van een course => via fetch alle tabs ophalen van de course (programmeer ik zelf wel) ("Ufora/start", "Inhoud", "Agenda", "Cijfers", ...)
+// cancel & save button
+
+let popupOpen = false;
+let editor;
+let currentCourseSelected;
+
+function createShortcutEditorPopup() {
+    const overlay = document.createElement("div");
+    overlay.classList.add("shortcutEditorPopupOverlay");
+
+    const box = document.createElement("div");
+    box.classList.add("shortcutEditorPopup");
+    box.innerHTML = `
+        <div class="top">
+            <h2 class="d2l-heading vui-heading-4">Course shortcut</h2>
+            <button type="button" id="shortcutPopupClose" class="d2l-body-compact">✕</button>
+        </div>
+        <label for="shortcutPopupInput" class="d2l-body-compact">Shortcut</label>
+        <input id="shortcutPopupInput" maxlength="1" class="d2l-body-compact" />
+        <div id="shortcutPopupStatus" class="d2l-body-compact"></div>
+
+        <div class="controls">
+            <button id="shortcutPopupCancel" type="button">Cancel</button>
+            <button id="shortcutPopupSave" type="button">Save</button>
+        </div>
+    `;
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    editor = {
+        overlay: overlay,
+        input: box.querySelector("#shortcutPopupInput"),
+        status: box.querySelector("#shortcutPopupStatus"),
+        closeBtn: box.querySelector("#shortcutPopupClose"),
+        cancelBtn: box.querySelector("#shortcutPopupCancel"),
+        saveBtn: box.querySelector("#shortcutPopupSave"),
+    };
+
+    editor.overlay.addEventListener("click", (event) => {
+        if (event.target === editor.overlay) closePopup();
+    });
+
+    editor.closeBtn.addEventListener("click", closePopup);
+    editor.cancelBtn.addEventListener("click", closePopup);
+    editor.saveBtn.addEventListener("click", async () => {
+        const value = String(editor.input.value || "")
+            .trim()
+            .toLowerCase();
+        const { valid } = getShortcutStatus(value);
+        if (!valid) return;
+
+        courseShortcuts[currentCourseSelected] = value;
+        await saveShortcutsToStorage();
+        updateCourseShortcutButton(currentCourseSelected);
+        closePopup();
+        showShortcutToast(`Saved shortcut "${value}"`);
+    });
+
+    editor.input.addEventListener("input", updateStatus);
+    editor.input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            editor.saveBtn.click();
+        }
+    });
+}
+
+function showCourseShortcutPopup(courseId) {
+    popupOpen = true;
+    currentCourseSelected = courseId;
+    if (!editor) createShortcutEditorPopup();
+
+    editor.overlay.style.display = "flex";
+    editor.input.value = courseShortcuts[currentCourseSelected] || "";
+
+    editor.input.focus();
+    editor.input.select();
+    updateStatus();
+}
+
+// Shortcut currently processing popup (links onder)
+
+// als shortcut geactiveerd wordt, tonen wat shortcut is (parameter van functie) en wat het doet
+// als letter typen, maar meerdere shortcuts beginnen met letter, zoals "c + a + ...", dan wachten tot volgende letter is getypt (of enter om gewoon "c" te doen)
+// links onder tonen welke shortcut "in progress is" ==> 2de popup
+
+function showShortcutToast(message, duration = 1700) {
+    let toast = document.getElementById("ufora-shortcut-toast");
+
+    if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "ufora-shortcut-toast";
+        toast.classList.add("shortcutToast");
+
+        toast.addEventListener("mouseenter", () => {
+            toastHover = true;
+            clearTimeout(toastTimer);
+        });
+        toast.addEventListener("mouseleave", () => {
+            toastHover = false;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.pointerEvents = "none";
+            }, 500);
+        });
+        document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.style.opacity = "1";
+    toast.style.pointerEvents = "auto";
+
+    clearTimeout(toastTimer); // stop old timer if user triggers another shortcut while one is already being shown
+    if (!toastHover) {
+        toastTimer = setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.pointerEvents = "none";
+        }, duration);
+    }
+}
+
+/* 6. INITIALIZE ALL SHORTCUTS */
 
 // 1. UI SHORTCUTS
 let elementsExist = getElements(); // try fast way

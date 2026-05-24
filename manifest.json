@@ -1,18 +1,13 @@
 {
   "name": "Ufora Shortcuts",
-  "version": "2.2",
+  "version": "2.3",
   "description": "Adds keyboard shortcuts to Ufora video players and UI! Saves a lot of time and makes it easier to navigate through videos.",
   "manifest_version": 3,
   "icons": {
     "16": "media/icon-16.png",
     "32": "media/icon-32.png",
     "48": "media/icon-48.png",
-    "64": "media/icon-64.png",
-    "128": "media/icon-128.png",
-    "256": "media/icon-256.png",
-    "512": "media/icon-512.png",
-    "1024": "media/icon-1024.png",
-    "1920": "media/icon-1920.png"
+    "128": "media/icon-128.png"
   },
   "action": {
     "default_popup": "src/popup/popup.html",
@@ -20,12 +15,7 @@
       "16": "media/icon-16.png",
       "32": "media/icon-32.png",
       "48": "media/icon-48.png",
-      "64": "media/icon-64.png",
-      "128": "media/icon-128.png",
-      "256": "media/icon-256.png",
-      "512": "media/icon-512.png",
-      "1024": "media/icon-1024.png",
-      "1920": "media/icon-1920.png"
+      "128": "media/icon-128.png"
     }
   },
   "permissions": [

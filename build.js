@@ -25,7 +25,22 @@ async function run() {
     const entries = glob.sync("**/*", {
         dot: true,
         nodir: true,
-        ignore: ["node_modules/**", "dist/**", ".git/**", "package.json", "package-lock.json"],
+        ignore: [
+            "node_modules/**",
+            "dist/**",
+            ".git/**",
+            "package.json",
+            "package-lock.json",
+            "media/icon-64.png",
+            "media/icon-256.png",
+            "media/icon-512.png",
+            "media/icon-1024.png",
+            "media/icon-1920.png",
+            "media/icon-v1.png",
+            "media/icon-v2.png",
+            "unused/*",
+            "*.zip",
+        ],
     });
 
     for (const rel of entries) {

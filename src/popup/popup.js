@@ -1,5 +1,10 @@
 // popup.js
 
+// Preference popup
+
+// Todo
+// toont preferenties, zoals Alt: hold of toggle, auto login aan/uit, ...
+
 function renderShortcutsByGroup(config, groupName, elementId) {
     const list = document.getElementById(elementId);
     if (!list) return;
