@@ -294,7 +294,16 @@ function mouseOutPlayer() {
     mouseInVideoPlayer = false;
 }
 
-/* 4. INITIALIZE ALL SHORTCUTS */
+/* 4. AUTO LOGIN */
+
+function login() {
+    if (window.location.href !== "https://elosp.ugent.be/welcome") return;
+
+    const login_btn = document.getElementById("ugent-login-button");
+    login_btn?.click();
+}
+
+/* 5. INITIALIZE ALL SHORTCUTS */
 
 // 1. UI SHORTCUTS
 let elementsExist = getElements(); // try fast way
@@ -319,6 +328,8 @@ document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
 initializeShortcuts();
 
 window.onload = () => {
+    login();
+
     if (!elementsExist) {
         getElements(); // try again (in case the buttons weren't loaded on first try)
     }

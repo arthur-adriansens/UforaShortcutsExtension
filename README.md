@@ -1,6 +1,6 @@
 # Ufora Shortcuts
 
-A Chrome extension that adds keyboard shortcuts to Ufora to make navigating videos and the interface faster and easier.
+A Chrome extension that adds keyboard shortcuts to Ufora to make navigating videos and the interface faster and easier. Also automaticly presses the Ufora login button.
 
 <p align="center">
   <img src="./media/icon-v1.png" alt="Render of version 1 of the 3D logo I made in Blender 😄." width="280" />
@@ -9,6 +9,7 @@ A Chrome extension that adds keyboard shortcuts to Ufora to make navigating vide
 
 ## Installation
 
+You can install the [Firefox add-on here](https://addons.mozilla.org/en-US/firefox/addon/ufora-shortcuts/).
 For now, it's not yet uploaded to the Chrome Web Store (will be available soon).
 
 1. Clone or download this repository
