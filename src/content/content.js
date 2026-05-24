@@ -1,5 +1,41 @@
 // content.js
 
+/* 0. PREFERENCES */
+
+const defaultPreferences = {
+    altMode: "toggle",
+    autoLogin: true,
+};
+
+async function getPreferences() {
+    if (!chrome?.storage?.local) return;
+
+    try {
+        const result = await chrome.storage.local.get(["shortcutSettings"]);
+        if (!result?.shortcutSettings) return;
+
+        preferences = result.shortcutSettings;
+    } catch (err) {
+        console.log("Failed to load preferences from storage:", err);
+    }
+
+    fetchedPreferences = true;
+
+    chrome.storage.onChanged.addListener((changes) => {
+        const newPreferences = changes?.shortcutSettings?.newValue;
+        if (newPreferences?.autoLogin === undefined) return;
+
+        preferences = newPreferences;
+
+        if (preferences.autoLogin) login();
+        if (preferences.altMode == "hold") toggleShowShortcuts(undefined, false);
+    });
+}
+
+let preferences = defaultPreferences;
+let fetchedPreferences = false;
+getPreferences();
+
 /* 1. UI SHORTCUTS */
 
 let showShortcuts = false;
@@ -118,15 +154,17 @@ function createCourseShortcutButtons() {
 }
 
 function toggleShowShortcuts(e, state = true) {
-    if (e.key !== "Alt") return;
+    if (e !== undefined) {
+        if (e.key !== "Alt") return;
+        e.preventDefault();
+    }
 
-    e.preventDefault();
-    showShortcuts = state;
+    if (preferences?.altMode === "hold") showShortcuts = state;
 
     shortcutButtons.forEach((btn) => {
         if (!btn) return;
 
-        btn.style.pointerEvents = showShortcuts ? "auto" : "none";
+        btn.style.pointerEvents = showShortcuts && btn.dataset.courseId !== undefined ? "auto" : "none";
 
         if (!btn.style.display) btn.style.opacity = showShortcuts ? "1" : "0";
         else btn.style.display = showShortcuts ? "flex" : "none";
@@ -141,8 +179,14 @@ function uiShortcuts(e) {
 
     switch (e.key) {
         case "Alt":
-            toggleShowShortcuts(e, true);
-            break;
+            if (preferences?.altMode === "toggle" || preferences?.altMode === undefined) {
+                showShortcuts = !showShortcuts;
+                break;
+            } else {
+                // "hold" Alt mode
+                toggleShowShortcuts(e, true);
+                break;
+            }
 
         case "c":
             // simulate full interaction instead of just .click() (realistic event)
@@ -324,7 +368,7 @@ const updateStatus = () => {
 /* 4. AUTO LOGIN */
 
 function login() {
-    if (window.location.href !== "https://elosp.ugent.be/welcome") return;
+    if (!window.location.href.startsWith("https://elosp.ugent.be/welcome")) return;
 
     const login_btn = document.getElementById("ugent-login-button");
     login_btn?.click();
@@ -484,8 +528,9 @@ document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
 
 initializeShortcuts();
 
-window.onload = () => {
-    login();
+window.onload = async () => {
+    if (!fetchedPreferences) await getPreferences(); // wait for it to be completed, if not completed yet for some reason
+    if (preferences?.autoLogin) login();
 
     if (!elementsExist) {
         getElements(); // try again (in case the buttons weren't loaded on first try)

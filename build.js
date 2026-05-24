@@ -40,6 +40,7 @@ async function run() {
             "media/icon-v2.png",
             "unused/*",
             "*.zip",
+            ".gitignore",
         ],
     });
 

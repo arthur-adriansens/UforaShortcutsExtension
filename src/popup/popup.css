@@ -7,30 +7,92 @@ body {
     color: #333333;
 }
 
-.container h3 {
-    margin-top: 0;
-    font-size: 16px;
+header {
     border-bottom: 1px solid #eaeaea;
     padding-bottom: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.panel {
+    margin-top: 8px;
+    padding: 12px;
+    padding-bottom: 8px;
+    border: 1px solid #eaeaea;
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+
+h2 {
+    margin-top: 0;
+    font-size: 16px;
+    margin-bottom: 0;
     color: #1a1a1a;
 }
 
-.container p {
+h3 {
     font-size: 13px;
-    margin-bottom: 12px;
+    margin-top: 8px;
+    margin-bottom: 14px;
     color: #4a4a4a;
 }
 
-.container ul {
+ul {
     list-style-type: none;
     padding: 0;
     margin: 0;
     font-size: 13px;
 }
 
-.container li {
-    margin-bottom: 8px;
-    background: #f4f4f4;
+li {
+    margin-bottom: 10px;
     padding: 6px 10px;
-    border-radius: 4px;
+}
+
+.settingRow {
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+
+svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    padding: 0.5rem 0rem 0.5rem 0.5rem;
+    cursor: pointer;
+}
+
+label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+select {
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    width: 100%;
+    cursor: pointer;
+}
+
+input[type="checkbox"] {
+    transform: scale(1.05);
+    accent-color: #0b4fa0;
+    cursor: pointer;
 }

@@ -6,24 +6,56 @@
         <link rel="stylesheet" href="popup.css" />
     </head>
     <body>
-        <div class="container">
-            <h3>Ufora Shortcuts</h3>
-            <!-- <p>Extension is currently <span style="color: rgb(2, 161, 2); font-weight: 500">active</span>.</p> -->
+        <header>
+            <h2>Ufora Shortcuts</h2>
+            <svg id="settingsToggle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path
+                    d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"
+                />
+                <circle cx="12" cy="12" r="3" />
+            </svg>
+        </header>
+        <!-- <p>Extension is currently <span style="color: rgb(2, 161, 2); font-weight: 500">active</span>.</p> -->
 
-            <p>UI shortcuts:</p>
-            <ul id="uiShortcuts">
-                <li>Loading shortcuts…</li>
-            </ul>
+        <main>
+            <div class="panel">
+                <h3>UI shortcuts:</h3>
+                <ul id="uiShortcuts">
+                    <li>Loading shortcuts…</li>
+                </ul>
+            </div>
 
-            <p>Video shortcuts:</p>
-            <ul id="videoShortcuts">
-                <li>Loading shortcuts…</li>
-            </ul>
+            <div class="panel">
+                <h3>Video shortcuts:</h3>
+                <ul id="videoShortcuts">
+                    <li>Loading shortcuts…</li>
+                </ul>
+            </div>
 
-            <p>Custom shortcuts:</p>
-            <ul id="customShortcuts">
-                <li>Loading shortcuts…</li>
-            </ul>
+            <div class="panel">
+                <h3>Custom shortcuts:</h3>
+                <ul id="customShortcuts">
+                    <li>Loading shortcuts…</li>
+                </ul>
+            </div>
+        </main>
+
+        <div id="settingsPanel" style="display: none">
+            <div class="panel">
+                <h3>Settings</h3>
+                <div class="settingRow">
+                    <label for="altMode">Alt key behavior</label>
+                    <select id="altMode">
+                        <option value="toggle">Toggle shortcuts with Alt</option>
+                        <option value="hold">Hold Alt to show shortcuts</option>
+                    </select>
+                </div>
+                <div class="settingRow">
+                    <label><input type="checkbox" id="autoLogin" /> Enable auto login</label>
+                </div>
+            </div>
+
+            <p style="margin-top: 8px; margin-bottom: 0"><i>Changes will be immediately applied, no refresh needed.</i></p>
         </div>
 
         <script src="popup.js"></script>
