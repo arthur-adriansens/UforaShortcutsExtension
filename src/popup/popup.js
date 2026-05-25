@@ -48,7 +48,35 @@ function renderCustomShortcuts(courseShortcuts, elementId) {
 
     Object.entries(courseShortcuts).forEach(([courseId, key]) => {
         const li = document.createElement("li");
-        li.innerHTML = `<strong>${key}:</strong> Course ${courseId}`;
+        li.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" ><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
+        li.innerHTML += `<strong>${key}:</strong> Course `;
+
+        if (courseId.includes(".")) {
+            // courseId is a link
+            const a = document.createElement("a");
+            a.href = courseId;
+            a.textContent = courseId.replace("https://", "");
+            li.appendChild(a);
+        } else {
+            li.innerHTML += `${courseId}`;
+        }
+
+        li.onclick = (e) => {
+            if (!e.target?.closest("svg")) return;
+
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                const tab = tabs?.[0];
+                if (!tab?.id || !tab?.url?.startsWith("https://ufora.ugent.be")) return;
+
+                chrome.tabs.sendMessage(tab.id, { type: "shortcut_edit", key, courseId }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.log("Could not send message to content script:", chrome.runtime.lastError.message);
+                    }
+                });
+            });
+        };
+
         list.appendChild(li);
     });
 }
@@ -65,6 +93,7 @@ function renderSettings(settings) {
 async function saveShortcutSettings(settings) {
     currentShortcutSettings = { ...currentShortcutSettings, ...settings };
     if (!chrome?.storage?.local) return;
+
     try {
         await chrome.storage.local.set({ shortcutSettings: currentShortcutSettings });
     } catch (err) {

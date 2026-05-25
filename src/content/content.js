@@ -56,8 +56,7 @@ function getElements() {
     if (!notificationsBtn) return false;
     buttonsWithShortcuts.push(notificationsBtn);
 
-    createShortcutButton("c", coursesBtnWrapper);
-    createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
+    createShortcutButtons();
 
     coursesBtn.addEventListener("click", createCourseShortcutButtons, { once: true });
     coursesBtnWrapper.children[0];
@@ -98,8 +97,13 @@ async function changeShortcut(e) {
     e.stopPropagation();
 
     if (e?.target?.dataset?.courseId !== undefined) {
-        showCourseShortcutPopup(e.target.dataset.courseId);
+        showCourseShortcutPopup(e.target.dataset.courseId, e.target.textContent);
     }
+}
+
+function createShortcutButtons() {
+    createShortcutButton("c", coursesBtnWrapper);
+    createShortcutButton("u", notificationsBtnWrapper?.children?.[0], "margin-left: -6px;");
 }
 
 function createShortcutButton(letter, wrapper, styleExtra = "") {
@@ -142,9 +146,19 @@ function createCourseShortcutButtons() {
         btn.classList.add("shortcutButton");
         btn.style.cssText += `position: relative; pointer-events: ${showShortcuts ? "auto" : "none"}; display: ${showShortcuts ? "flex" : "none"}; opacity: 1; margin-right: .5rem;`;
 
-        btn.textContent = courseShortcuts[course_id] || "+";
-        btn.dataset.courseId = course_id;
+        let shortcutLetter = courseShortcuts[course_id];
+        if (shortcutLetter === undefined) {
+            // Search for courseId in the link (example: ufora.ugent.be/d2l/home/<courseId>) and link shortcut to button
+            for (let link in courseShortcuts) {
+                if (link.includes(course_id)) {
+                    shortcutLetter = courseShortcuts[link];
+                    break;
+                }
+            }
+        }
+        btn.textContent = shortcutLetter || "+";
 
+        btn.dataset.courseId = course_id;
         btn.onclick = changeShortcut;
 
         shortcutButtons.push(btn);
@@ -158,6 +172,8 @@ function toggleShowShortcuts(e, state = true) {
         if (e.key !== "Alt") return;
         e.preventDefault();
     }
+
+    if (!buttonsAdded) createCourseShortcutButtons(); // happens with slow internet (courses menu opens before event listener of it opening is even added)
 
     if (preferences?.altMode === "hold") showShortcuts = state;
 
@@ -338,7 +354,7 @@ function getShortcutStatus(value) {
 
     const conflict = Object.entries(courseShortcuts).find(([id, key]) => key === ch && id !== courseId);
     if (conflict) {
-        return { valid: false, message: `"${ch}" is already in use` };
+        return { valid: "warning", message: `"${ch}" is already in use, old shortcut will be replaced`, conflict: conflict };
     }
 
     return {
@@ -349,7 +365,8 @@ function getShortcutStatus(value) {
 
 function updateCourseShortcutButton(courseId) {
     shortcutButtons.forEach((btn) => {
-        if (btn.dataset.courseId === courseId) {
+        // courseId can be the id, or a link that contains the id ==> using includes: equal to id or includes id
+        if (courseId.includes(btn?.dataset?.courseId)) {
             btn.textContent = courseShortcuts[courseId] || "+";
         }
     });
@@ -367,7 +384,7 @@ const updateStatus = () => {
 
     const { valid, message } = getShortcutStatus(editor.input.value);
     editor.status.textContent = message;
-    editor.status.style.color = valid ? "#0b6f31" : "#b03535";
+    editor.status.style.color = valid == "warning" ? "#d38902" : (valid ? "#0b6f31" : "#b03535"); // prettier-ignore
     editor.saveBtn.disabled = !valid;
     editor.saveBtn.style.opacity = valid ? "1" : "0.55";
 };
@@ -410,7 +427,7 @@ function createShortcutEditorPopup() {
         <div id="shortcutPopupStatus" class="d2l-body-compact"></div>
 
         <label for="shortcutPopupLink" class="d2l-body-compact">Custom Link</label>
-        <input id="shortcutPopupLink" type="text" class="d2l-body-compact" />
+        <input id="shortcutPopupLink" type="text" class="d2l-body-compact" placeholder="default: course homepage" />
         <p class="d2l-body-compact"><i>This is optional: 
             <u style="cursor:pointer;" onclick="document.getElementById('more').style.display = 'block'">read more</u>
             <span id="more" style="display:none">
@@ -450,17 +467,21 @@ function createShortcutEditorPopup() {
             .trim()
             .toLowerCase();
 
-        const { valid } = getShortcutStatus(value);
+        const { valid, conflict } = getShortcutStatus(value);
         if (!valid) return;
+
+        if (valid == "warning" && conflict?.length > 0) {
+            // remove current shortcut to be replaced
+            delete courseShortcuts[conflict[0]];
+        }
 
         // Add shortcut with courseId or link
         if (editor.linkInput.value) delete courseShortcuts[currentCourseSelected];
-        // Todo: ability to be able to edit links, right now not possible (letter with link doesn't show up next to the course)
 
         courseShortcuts[editor.linkInput.value || currentCourseSelected] = value;
         await saveShortcutsToStorage();
 
-        updateCourseShortcutButton(currentCourseSelected);
+        updateCourseShortcutButton(editor.linkInput.value || currentCourseSelected);
         closePopup();
         showShortcutToast(`Saved shortcut "${value}"`);
     });
@@ -476,13 +497,25 @@ function createShortcutEditorPopup() {
     editor.linkInput.addEventListener("keydown", autoSubmit);
 }
 
-function showCourseShortcutPopup(courseId) {
+function showCourseShortcutPopup(courseId, shortcut) {
     popupOpen = true;
     currentCourseSelected = courseId;
     if (!editor) createShortcutEditorPopup();
 
     editor.overlay.style.display = "flex";
-    editor.input.value = courseShortcuts[currentCourseSelected] || "";
+
+    editor.input.value = courseShortcuts[courseId] || "";
+    editor.linkInput.value = "";
+    if (shortcut !== "+") {
+        editor.input.value = shortcut;
+
+        if (courseId?.includes(".")) {
+            editor.linkInput.value = courseId; // courseId is a link
+        } else {
+            const link = Object.keys(courseShortcuts).find((id) => courseShortcuts[id] === shortcut);
+            if (link && link !== courseId) editor.linkInput.value = link;
+        }
+    }
 
     editor.input.focus();
     editor.input.select();
@@ -552,6 +585,17 @@ async function initializeShortcuts() {
 
 document.addEventListener("keydown", uiShortcuts);
 document.addEventListener("keyup", (e) => toggleShowShortcuts(e, false));
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!message || message.type !== "shortcut_edit") return;
+
+    const { courseId, key } = message;
+    if (!courseId) return;
+
+    if (!editor) createShortcutEditorPopup();
+    showCourseShortcutPopup(courseId, key || courseShortcuts[courseId] || "+");
+    sendResponse({ success: true });
+});
 
 initializeShortcuts();
 

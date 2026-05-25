@@ -50,6 +50,28 @@ ul {
 li {
     margin-bottom: 10px;
     padding: 6px 10px;
+    word-break: break-all;
+    position: relative;
+    transition: padding .2s;
+
+    &:hover {
+        padding-left: 20px;
+    }
+
+    &:hover>svg {
+        opacity: 1;
+    }
+
+    &>svg {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 0;
+        left: -8px;
+        opacity: 0;
+        transition: opacity .2s;
+        user-select: none;
+    }
 }
 
 .settingRow {
