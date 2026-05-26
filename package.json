@@ -9,9 +9,12 @@
     },
     "devDependencies": {
         "archiver": "^5.3.1",
+        "cssnano": "^8.0.1",
         "csso": "^5.0.0",
         "fs-extra": "^11.1.1",
         "glob": "^10.2.7",
+        "postcss": "^8.5.15",
+        "postcss-nested": "^7.0.2",
         "terser": "^5.20.2"
     }
 }

@@ -3,6 +3,9 @@ const path = require("path");
 const glob = require("glob");
 const terser = require("terser");
 const csso = require("csso");
+const postcss = require("postcss");
+const postcssNested = require("postcss-nested");
+const cssnano = require("cssnano");
 const archiver = require("archiver");
 
 async function run() {
@@ -58,8 +61,14 @@ async function run() {
                 else await fs.copyFile(src, dest);
             } else if (ext === ".css") {
                 const css = await fs.readFile(src, "utf8");
-                const out = csso.minify(css).css;
-                await fs.writeFile(dest, out, "utf8");
+                try {
+                    const result = await postcss([postcssNested, cssnano({ preset: "default" })]).process(css, { from: src, to: dest });
+                    await fs.writeFile(dest, result.css, "utf8");
+                } catch (err) {
+                    console.warn("PostCSS processing failed for", rel, err);
+                    const out = csso.minify(css).css;
+                    await fs.writeFile(dest, out, "utf8");
+                }
             } else {
                 await fs.copyFile(src, dest);
             }

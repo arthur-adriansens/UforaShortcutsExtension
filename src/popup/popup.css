@@ -54,14 +54,6 @@ li {
     position: relative;
     transition: padding .2s;
 
-    &:hover {
-        padding-left: 20px;
-    }
-
-    &:hover>svg {
-        opacity: 1;
-    }
-
     &>svg {
         width: 16px;
         height: 16px;
@@ -71,6 +63,14 @@ li {
         opacity: 0;
         transition: opacity .2s;
         user-select: none;
+    }
+
+    &:hover {
+        padding-left: 20px;
+    }
+
+    &:hover>svg {
+        opacity: 1;
     }
 }
 
