@@ -1,8 +1,9 @@
 {
   "name": "Ufora Shortcuts",
-  "version": "3.1",
+  "version": "3.2",
   "description": "Adds keyboard shortcuts to Ufora video players and UI! Saves a lot of time and makes it easier to navigate through videos.",
   "manifest_version": 3,
+  "homepage_url": "https://github.com/arthur-adriansens/UforaShortcutsExtension/blob/main/LICENSE",
   "icons": {
     "16": "media/icon-16.png",
     "32": "media/icon-32.png",

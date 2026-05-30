@@ -66,3 +66,9 @@ npm run build
 ```
 
 The script will create `dist/` and a zip file named based on `manifest.json` (e.g. `Ufora Shortcuts-1.0.0.zip`).
+
+## Todo
+
+- [] add ignore ctrl option in settings (default on)
+- [] fix default course url sometimes being a url and sometimes the code
+- [] switch course around (keys and values switched: key should be the physical keyboard button)

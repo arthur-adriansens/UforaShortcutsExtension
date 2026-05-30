@@ -1,4 +1,13 @@
-// content.js
+/**
+ * @license
+ * Copyright (c) 2026 Arthur Adriansens
+ * All rights reserved.
+ *
+ * This code is proprietary. You may not copy, modify,
+ * distribute, or reverse-engineer this software without permission.
+ *
+ * Unauthorized use is strictly prohibited.
+ */
 
 /* 0. PREFERENCES */
 
@@ -417,6 +426,7 @@ function createShortcutEditorPopup() {
 
     const box = document.createElement("div");
     box.classList.add("shortcutEditorPopup");
+
     box.innerHTML = `
         <div class="top">
             <h2 class="d2l-heading vui-heading-4">Course shortcut</h2>
@@ -429,12 +439,16 @@ function createShortcutEditorPopup() {
         <label for="shortcutPopupLink" class="d2l-body-compact">Custom Link</label>
         <input id="shortcutPopupLink" type="text" class="d2l-body-compact" placeholder="default: course homepage" />
         <p class="d2l-body-compact"><i>This is optional: 
-            <u style="cursor:pointer;" onclick="document.getElementById('more').style.display = 'block'">read more</u>
-            <span id="more" style="display:none">
+            <u id="shortcutPopupReadMore" style="cursor:pointer;">read more</u>
+            <div id="more">
                 Redirect to a different tab, instead of the default home tab of the course. 
-                This can be any link: "https://ufora.ugent.be/d2l/home/..." would be the home page of the course (default) and "https://ufora.ugent.be/d2l/le/content/.../Home" will redirect to the content of the course.
-                Make sure to replace the "..." with the courseId (just copy the url).
-            </span>
+                This can be any link: 
+                <ul>
+                    <li><u>https://ufora.ugent.be/d2l/home/...</u> is the default home tab of the course</li>
+                    <li><u>https://ufora.ugent.be/d2l/le/content/.../Home</u> will redirect to the content of the course instead of the home tab</li>
+                </ul>
+                Just copy and paste any url here.
+            </div>
         </i></p>
 
         <div class="controls">
@@ -445,6 +459,19 @@ function createShortcutEditorPopup() {
 
     overlay.appendChild(box);
     document.body.appendChild(overlay);
+
+    const readMore = box.querySelector("#shortcutPopupReadMore");
+    const more = box.querySelector("#more");
+    readMore?.addEventListener("click", () => {
+        const toggled = readMore.dataset.clicked;
+
+        if (!toggled) readMore.dataset.clicked = "true";
+        else delete readMore.dataset.clicked;
+
+        readMore.textContent = toggled ? "read more" : "hide extra info";
+        box.style.width = toggled ? "" : "min(400px, 90vw)";
+        if (more) more.style.display = toggled ? "none" : "block";
+    });
 
     editor = {
         overlay: overlay,

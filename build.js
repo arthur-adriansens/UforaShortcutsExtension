@@ -56,7 +56,13 @@ async function run() {
         try {
             if (ext === ".js") {
                 const code = await fs.readFile(src, "utf8");
-                const result = await terser.minify(code, { format: { comments: false } });
+                const result = await terser.minify(code, {
+                    compress: true,
+                    mangle: {
+                        toplevel: true,
+                    },
+                    format: { comments: "some" },
+                });
                 if (result.code) await fs.writeFile(dest, result.code, "utf8");
                 else await fs.copyFile(src, dest);
             } else if (ext === ".css") {

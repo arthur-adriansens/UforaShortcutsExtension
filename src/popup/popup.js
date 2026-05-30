@@ -1,10 +1,19 @@
-// popup.js
+/**
+ * @license
+ * Copyright (c) 2026 Arthur Adriansens
+ * All rights reserved.
+ *
+ * This code is proprietary. You may not copy, modify,
+ * distribute, or reverse-engineer this software without permission.
+ *
+ * Unauthorized use is strictly prohibited.
+ */
 
 // Preference popup
 // toont preferenties, zoals Alt: hold of toggle, auto login aan/uit, ...
 
 const defaultShortcutSettings = {
-    altMode: "hold",
+    altMode: "toggle",
     autoLogin: true,
 };
 let currentShortcutSettings = { ...defaultShortcutSettings };
@@ -16,7 +25,7 @@ function renderShortcutsByGroup(config, groupName, elementId) {
     list.innerHTML = "";
 
     if (!config || Object.keys(config).length === 0) {
-        list.innerHTML = "<li>No shortcuts configured.</li>";
+        list.innerHTML = "<li style='word-break: normal'>No shortcuts configured. Reload a page on Ufora to setup the shortcuts automatically.</li>";
         return;
     }
 
@@ -56,6 +65,7 @@ function renderCustomShortcuts(courseShortcuts, elementId) {
             // courseId is a link
             const a = document.createElement("a");
             a.href = courseId;
+            a.target = "_blank";
             a.textContent = courseId.replace("https://", "");
             li.appendChild(a);
         } else {
@@ -102,12 +112,14 @@ async function saveShortcutSettings(settings) {
 }
 
 const panel = document.getElementById("settingsPanel");
+const iconToggle = document.getElementById("settingsToggle");
 const main = document.querySelector("main");
 
 function toggleSettingsPanel() {
     if (!panel) return;
 
     let visible = panel.style.display === "none";
+    iconToggle.dataset.icon = visible ? "home" : "settings";
     panel.style.display = visible ? "block" : "none";
     main.style.display = visible ? "none" : "block";
 }
@@ -144,6 +156,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Event listeners for settings changes
     document.getElementById("settingsToggle")?.addEventListener("click", toggleSettingsPanel);
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+
+        const visible = panel?.style?.display !== "none";
+        if (visible) {
+            e.preventDefault();
+            toggleSettingsPanel();
+        }
+    });
+
     document.getElementById("altMode")?.addEventListener("change", (event) => {
         saveShortcutSettings({ altMode: event.target.value });
     });
